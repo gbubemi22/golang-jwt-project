@@ -12,7 +12,8 @@ import (
 	helper "github.com/gbubemi22/golang-jwt-project/helpers"
 	"github.com/gbubemi22/golang-jwt-project/models"
 
-	"github.com/gbubemi22/golang-jwt-project/database"
+	//"github.com/gbubemi22/golang-jwt-project/database"
+	database "github.com/gbubemi22/golang-jwt-project/database"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
@@ -52,27 +53,25 @@ func Signup() gin.HandlerFunc {
 
 		if err := c.BindJSON(&user); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			//return
+			return
 
 		}
 		defer cancel()
-         return
+         //return
 
 
-	    err := validate.Struct(user)
-		if err != nil {
+	    validationErr := validate.Struct(user)
+	    if validationErr != nil {
+		    c.JSON(http.StatusBadRequest, gin.H{"error":validationErr.Error()})
+		    return
+	    }
 
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			//return
-		}
-		return 
-
-		count, err := userCollection.CountDocuments(ctx, bson.M{"email": user.Email})
-		defer cancel()
-		if err != nil {
-			log.Panic(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occured while checking for the email"})
-		}
+	    count, err := userCollection.CountDocuments(ctx, bson.M{"email":user.Email})
+	    defer cancel()
+	    if err != nil {
+		    log.Panic(err)
+		    c.JSON(http.StatusInternalServerError, gin.H{"error":"error occured while checking for the email"})
+	    }
 
 		password := HashPassword(*user.Password)
 		user.Password = &password
@@ -106,6 +105,7 @@ func Signup() gin.HandlerFunc {
 		c.JSON(http.StatusOK, resultInsertionNumber)
 
 	}
+
 }
 
 func Login() gin.HandlerFunc {
